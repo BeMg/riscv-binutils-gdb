@@ -402,7 +402,8 @@ enum reg_class
   RCLASS_GPR,
   RCLASS_FPR,
   RCLASS_CSR,
-  RCLASS_MAX
+  RCLASS_MAX,
+  RCLASS_VPR
 };
 
 static struct hash_control *reg_names_hash = NULL;
@@ -641,6 +642,7 @@ md_begin (void)
   hash_reg_names (RCLASS_GPR, riscv_gpr_names_abi, NGPR);
   hash_reg_names (RCLASS_FPR, riscv_fpr_names_numeric, NFPR);
   hash_reg_names (RCLASS_FPR, riscv_fpr_names_abi, NFPR);
+  hash_reg_names (RCLASS_VPR, riscv_vpr_names_numeric, NVPR);
 
 #define DECLARE_CSR(name, num) hash_reg_name (RCLASS_CSR, #name, num);
 #define DECLARE_CSR_ALIAS(name, num) DECLARE_CSR(name, num);
@@ -1616,6 +1618,32 @@ rvc_lui:
 		}
 
 	      break;
+
+      // Temp symbol for vector data register
+      case 'x': /* Destination register.  */
+      case 'c': /* Source register.  */
+      case 'g': /* Target register.  */
+        if (reg_lookup(&s, RCLASS_VPR, &regno)) {
+          c = *args;
+          if (*s == ' ')
+            ++s;
+
+          /* Now that we have assembled one operand, we use the args
+             string to figure out where it goes in the instruction.  */
+          switch (c) {
+          case 'c':
+            INSERT_OPERAND(RS1, *ip, regno);
+            break;
+          case 'x':
+            INSERT_OPERAND(RD, *ip, regno);
+            break;
+          case 'g':
+            INSERT_OPERAND(RS2, *ip, regno);
+            break;
+          }
+          continue;
+        }
+        break;
 
 	    case 'I':
 	      my_getExpression (imm_expr, s);
