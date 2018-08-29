@@ -565,6 +565,9 @@ validate_riscv_insn (const struct riscv_opcode *opc)
       case 't':	USE_BITS (OP_MASK_RS2,		OP_SH_RS2);	break;
       case 'P':	USE_BITS (OP_MASK_PRED,		OP_SH_PRED); break;
       case 'Q':	USE_BITS (OP_MASK_SUCC,		OP_SH_SUCC); break;
+      case 'f':	USE_BITS (OP_MASK_RS1,		OP_SH_RS1);	break;
+      case 'h':	USE_BITS (OP_MASK_RS2,		OP_SH_RS2);	break;
+      case 'b':	USE_BITS (OP_MASK_RD,		OP_SH_RD);	break;
       case 'o':
       case 'j': used_bits |= ENCODE_ITYPE_IMM (-1U); break;
       case 'a':	used_bits |= ENCODE_UJTYPE_IMM (-1U); break;
@@ -1620,9 +1623,9 @@ rvc_lui:
 	      break;
 
       // Temp symbol for vector data register
-      case 'x': /* Destination register.  */
-      case 'c': /* Source register.  */
-      case 'g': /* Target register.  */
+      case 'b': /* Destination register.  */
+      case 'f': /* Source register.  */
+      case 'h': /* Target register.  */
         if (reg_lookup(&s, RCLASS_VPR, &regno)) {
           c = *args;
           if (*s == ' ')
@@ -1631,13 +1634,13 @@ rvc_lui:
           /* Now that we have assembled one operand, we use the args
              string to figure out where it goes in the instruction.  */
           switch (c) {
-          case 'c':
+          case 'f':
             INSERT_OPERAND(RS1, *ip, regno);
             break;
-          case 'x':
+          case 'b':
             INSERT_OPERAND(RD, *ip, regno);
             break;
-          case 'g':
+          case 'h':
             INSERT_OPERAND(RS2, *ip, regno);
             break;
           }
@@ -1765,6 +1768,7 @@ md_assemble (char *str)
   bfd_reloc_code_real_type imm_reloc = BFD_RELOC_UNUSED;
 
   const char *error = riscv_ip (str, &insn, &imm_expr, &imm_reloc);
+  as_bad ("`%s'", str);
 
   if (error)
     {
